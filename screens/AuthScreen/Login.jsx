@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import firestore from '@react-native-firebase/firestore';
 import {
   View,
   Text,
@@ -7,9 +8,12 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-
+import { AuthContext } from '../../context/AuthContext';
 const LoginScreen = ({ navigation }) => {
+  const { login } = useContext(AuthContext);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,10 +30,43 @@ const LoginScreen = ({ navigation }) => {
   const handleGoogleSignIn = () => {
     console.log('Google Sign In clicked');
   };
-  const handleSubmit = () => {
-    console.log('Login data:', formData);
-    // Add your login logic here
+  const handleLogin = async () => {
+    const { email, password } = formData;
+
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await login(email, password);
+    } catch (err) {
+      console.log('Login error:', err);
+      Alert.alert('Login Failed', err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const uploadMessage = async () => {
+    try {
+      await firestore().collection('messages').add({
+        text: 'Hello from Faisal',
+        senderId: 'faisal_001',
+        timestamp: firestore.FieldValue.serverTimestamp(),
+      });
+
+      console.log('Message sent!');
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
+  useEffect(() => {
+    // Call the uploadMessage function when the component mounts
+    uploadMessage();
+  }, []);
 
   return (
     <ScrollView className="flex-1 bg-gray-100">
@@ -87,7 +124,7 @@ const LoginScreen = ({ navigation }) => {
 
         <TouchableOpacity
           className="w-full bg-blue-500 p-3 rounded-lg mb-4"
-          onPress={handleSubmit}
+          onPress={handleLogin}
         >
           <Text className="text-white text-center font-bold">Login</Text>
         </TouchableOpacity>

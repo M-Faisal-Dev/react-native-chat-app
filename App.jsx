@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from 'react-native';
 import { Home, MessageCircle, User, Settings } from 'lucide-react-native';
+import { AuthProvider, AuthContext } from './context/AuthContext';
 
 // Screens
 import HomeScreen from './screens/HomeScreen';
@@ -12,12 +13,12 @@ import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/AuthScreen/Login';
 import SignupScreen from './screens/AuthScreen/Signup';
+import VerifyEmailScreen from './screens/AuthScreen/VerifyEmail';
 
-// Create navigators outside components
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Memoized tab icons component
+// Icon component for tabs
 const TabIcon = ({ route, color, size }) => {
   switch (route) {
     case 'Home':
@@ -33,7 +34,7 @@ const TabIcon = ({ route, color, size }) => {
   }
 };
 
-// Main tabs component
+// Bottom tabs
 const MainTabs = React.memo(() => {
   const isDarkMode = useColorScheme() === 'dark';
 
@@ -73,21 +74,31 @@ const MainTabs = React.memo(() => {
   );
 });
 
-// Auth stack component
+// Auth stack
 const AuthStack = React.memo(() => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="Signup" component={SignupScreen} />
+    <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
   </Stack.Navigator>
 ));
 
-// Main app component
-export default function App() {
-  const [isLoggedIn] = useState(true); // In real app, use context or state management
+// App Navigator
+const AppNavigator = () => {
+  const { user } = useContext(AuthContext);
 
   return (
     <NavigationContainer>
-      {isLoggedIn ? <MainTabs /> : <AuthStack />}
+      {user ? <MainTabs /> : <AuthStack />}
     </NavigationContainer>
+  );
+};
+
+// Final App export wrapped with AuthProvider
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
   );
 }

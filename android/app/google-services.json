@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "338833728433",
+    "project_id": "chat-app-cbda3",
+    "storage_bucket": "chat-app-cbda3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338833728433:android:8bb93e2127841ca0025390",
+        "android_client_info": {
+          "package_name": "com.faisal.chatapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAUn54q2msTE4nOAlbpIK1--Zt1MhUcMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

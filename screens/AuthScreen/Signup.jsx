@@ -7,7 +7,11 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
+
+import auth from '@react-native-firebase/auth';
+
 const SignupScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -24,9 +28,41 @@ const SignupScreen = ({ navigation }) => {
     });
   };
 
-  const handleSubmit = () => {
-    console.log('Signup data:', formData);
-    // Add your signup logic here
+  const handleSignup = async () => {
+    const { name, email, password, confirmPassword } = formData;
+
+    if (!name || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const userCredential = await auth().createUserWithEmailAndPassword(
+        email,
+        password,
+      );
+
+      await userCredential.user.sendEmailVerification();
+
+      // Update display name (optional)
+      await userCredential.user.updateProfile({
+        displayName: name,
+      });
+
+      Alert.alert('Success', 'Account created successfully');
+      navigation.navigate('VerifyEmail'); // or wherever you want to go
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Signup Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -91,7 +127,7 @@ const SignupScreen = ({ navigation }) => {
 
         <TouchableOpacity
           className="w-full bg-blue-500 p-3 rounded-lg mb-4"
-          onPress={handleSubmit}
+          onPress={handleSignup}
         >
           <Text className="text-white text-center font-bold">Sign Up</Text>
         </TouchableOpacity>

@@ -1,6 +1,24 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+// ✅ Add plugin repositories so Gradle can find Firebase plugin
+pluginManagement {
+    repositories {
+        google()                // Required for Firebase plugin
+        mavenCentral()
+        gradlePluginPortal()
+        // Keep this includeBuild
+        includeBuild("../node_modules/@react-native/gradle-plugin")
+    }
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromCommand()
+}
+
 rootProject.name = 'myapp'
 include ':app'
+
+// Required to find React Native gradle plugin
 includeBuild('../node_modules/@react-native/gradle-plugin')
