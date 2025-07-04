@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,66 +10,52 @@ import {
   Platform,
 } from 'react-native';
 import { ArrowLeft, Send, Paperclip, Mic } from 'lucide-react-native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { AuthContext } from '../../context/AuthContext';
 
 const ChatScreen = ({ route, navigation }) => {
-  const { userId, userName, userAvatar } = route.params || {
-    userId: '1',
-    userName: 'John Doe',
-    userAvatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-  };
+  const { userId, userName, userAvatar } = route.params;
+  const currentUser = auth().currentUser;
+  const db = firestore();
 
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      text: 'Hey there! How are you doing?',
-      sender: 'them',
-      time: '10:30 AM',
-    },
-    {
-      id: '2',
-      text: 'I was just thinking about our project',
-      sender: 'them',
-      time: '10:31 AM',
-    },
-    {
-      id: '3',
-      text: "I'm good! Just working on the new UI designs",
-      sender: 'me',
-      time: '10:32 AM',
-    },
-    {
-      id: '4',
-      text: 'The deadline is coming up soon',
-      sender: 'them',
-      time: '10:33 AM',
-    },
-    {
-      id: '5',
-      text: 'Yes, I should have the prototype ready by Friday',
-      sender: 'me',
-      time: '10:35 AM',
-    },
-  ]);
-
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const flatListRef = useRef();
 
-  const handleSend = () => {
+  const chatId =
+    currentUser.uid < userId
+      ? `${currentUser.uid}_${userId}`
+      : `${userId}_${currentUser.uid}`;
+
+  useEffect(() => {
+    const unsubscribe = db
+      .collection('chats')
+      .doc(chatId)
+      .collection('messages')
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(snapshot => {
+        const msgs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(msgs);
+      });
+
+    return () => unsubscribe();
+  }, [chatId]);
+
+  const handleSend = async () => {
     if (!newMessage.trim()) return;
 
-    const message = {
-      id: Date.now().toString(),
-      text: newMessage,
-      sender: 'me',
-      time: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    };
+    await db.collection('chats').doc(chatId).collection('messages').add({
+      text: newMessage.trim(),
+      senderId: currentUser.uid,
+      receiverId: userId,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
 
-    setMessages([...messages, message]);
     setNewMessage('');
-
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
@@ -99,7 +85,7 @@ const ChatScreen = ({ route, navigation }) => {
   }, [navigation, userName, userAvatar]);
 
   const renderMessage = ({ item }) => {
-    const isMe = item.sender === 'me';
+    const isMe = item.senderId === currentUser.uid;
     return (
       <View className={`mb-2 px-4 ${isMe ? 'items-end' : 'items-start'}`}>
         <View
@@ -111,11 +97,14 @@ const ChatScreen = ({ route, navigation }) => {
             {item.text}
           </Text>
           <Text
-            className={`text-[10px] mt-1 ${
-              isMe ? 'text-blue-100' : 'text-gray-500'
-            }`}
+            className={`text-[10px] mt-1 ${isMe ? 'text-blue-100' : 'text-gray-500'}`}
           >
-            {item.time}
+            {item.createdAt?.toDate
+              ? item.createdAt.toDate().toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : ''}
           </Text>
         </View>
       </View>
@@ -128,7 +117,6 @@ const ChatScreen = ({ route, navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
-      {/* Messages */}
       <FlatList
         ref={flatListRef}
         data={messages}

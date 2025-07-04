@@ -49,25 +49,6 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  const uploadMessage = async () => {
-    try {
-      await firestore().collection('messages').add({
-        text: 'Hello from Faisal',
-        senderId: 'faisal_001',
-        timestamp: firestore.FieldValue.serverTimestamp(),
-      });
-
-      console.log('Message sent!');
-    } catch (err) {
-      console.error('Error:', err);
-    }
-  };
-
-  useEffect(() => {
-    // Call the uploadMessage function when the component mounts
-    uploadMessage();
-  }, []);
-
   return (
     <ScrollView className="flex-1 bg-gray-100">
       <View className="flex-1 items-center justify-center p-4">

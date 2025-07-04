@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import {
   Edit,
@@ -16,24 +17,41 @@ import {
   Globe,
   Briefcase,
 } from 'lucide-react-native';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 const ProfileScreen = ({ navigation }) => {
-  const [user, setUser] = useState({
-    name: 'John Alexander Doe',
-    username: '@johndoe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    bio: 'Senior Mobile Developer | React Native Expert | UI/UX Enthusiast',
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-    location: 'San Francisco, CA',
-    country: 'United States',
-    birthDate: '15 June 1990',
-    website: 'https://johndoe.dev',
-    profession: 'Software Engineer at TechCorp',
-    posts: 128,
-    followers: 2453,
-    following: 342,
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const uid = auth().currentUser.uid;
+        const doc = await firestore().collection('users').doc(uid).get();
+        if (doc.exists) {
+          setUser(doc.data());
+        } else {
+          console.warn('User document does not exist.');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  if (loading || !user) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#3B82F6" />
+        <Text className="mt-4 text-gray-600">Loading Profile...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="bg-gray-100 flex-1">

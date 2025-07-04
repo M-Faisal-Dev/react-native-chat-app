@@ -8,6 +8,14 @@ import {
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { AuthContext } from '../../context/AuthContext';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 
 const VerifyEmailScreen = ({ navigation }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -43,16 +51,53 @@ const VerifyEmailScreen = ({ navigation }) => {
   };
 
   // Check email verification status
-  const checkVerification = async () => {
+
+  const checkVerification = async ({
+    setIsLoading,
+    setIsVerified,
+    setUser,
+  }) => {
     setIsLoading(true);
+
     try {
-      const user = auth().currentUser;
-      await user.reload(); // Reload user data
+      const auth = getAuth();
+      const firestore = getFirestore();
+      const user = auth.currentUser;
+
+      // Refresh auth state
+      await user.reload();
+
       if (user.emailVerified) {
-        console.log(
-          user,
-          'this is the user object after reload, it should have emailVerified set to true if the email is verified. ',
-        );
+        const userRef = doc(firestore, 'users', user.uid);
+        const snapshot = await getDoc(userRef);
+
+        console.log('Checking user document:', snapshot.exists());
+
+        if (!snapshot.exists()) {
+          await setDoc(userRef, {
+            uid: user.uid,
+            name: user.displayName || '',
+            username: '', // Let user set this later
+            email: user.email || '',
+            phone: user.phoneNumber || '',
+            avatar: user.photoURL || '',
+            bio: '',
+            location: '',
+            country: '',
+            birthDate: '',
+            website: '',
+            profession: '',
+            totalContacts: 0,
+            status: 'online',
+            lastSeen: new Date(),
+            createdAt: serverTimestamp(),
+          });
+
+          console.log('✅ User saved to Firestore');
+        } else {
+          console.log('⚠️ User already exists in Firestore');
+        }
+
         setIsVerified(true);
         setUser(user);
       } else {
@@ -65,7 +110,6 @@ const VerifyEmailScreen = ({ navigation }) => {
       setIsLoading(false);
     }
   };
-
   // Resend verification email
   const resendEmail = async () => {
     setIsLoading(true);
@@ -101,13 +145,20 @@ const VerifyEmailScreen = ({ navigation }) => {
           <>
             <TouchableOpacity
               className="bg-blue-500 rounded-lg py-3 mb-4"
-              onPress={checkVerification}
+              onPress={() =>
+                checkVerification({
+                  setIsLoading,
+                  setIsVerified,
+                  setUser,
+                })
+              }
               disabled={isLoading}
             >
               <Text className="text-white text-center font-semibold">
                 I've Verified My Email
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               className="bg-gray-300 rounded-lg py-3"
               onPress={resendEmail}

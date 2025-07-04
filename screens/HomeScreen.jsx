@@ -10,52 +10,56 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+} from '@react-native-firebase/firestore';
+
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState([]);
 
-  // Fetch mock users
+  // 🔥 Fetch users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
-      setTimeout(() => {
-        const mockUsers = [
-          {
-            id: '1',
-            name: 'John Doe',
-            avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-            lastMessage: 'Hey, how are you doing?',
-            time: '10:30 AM',
-            unread: 2,
-          },
-          {
-            id: '2',
-            name: 'Jane Smith',
-            avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-            lastMessage: 'Can we meet tomorrow?',
-            time: 'Yesterday',
-            unread: 0,
-          },
-          {
-            id: '3',
-            name: 'Alex Johnson',
-            avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-            lastMessage: 'The project is due next week',
-            time: 'Monday',
-            unread: 5,
-          },
-        ];
-        setUsers(mockUsers);
-        setFilteredUsers(mockUsers);
+      try {
+        const firestore = getFirestore();
+        const usersCollection = collection(firestore, 'users');
+        const usersSnapshot = await getDocs(
+          query(usersCollection, orderBy('name')),
+        );
+
+        const userList = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || '',
+            avatar: data.avatar || 'https://i.pravatar.cc/150?img=1',
+            lastMessage: data.lastMessage || 'Say hello!',
+            time: data.lastSeen?.toDate().toLocaleTimeString() || 'Now',
+            unread: data.unread || 0,
+          };
+        });
+
+        setUsers(userList);
+        setFilteredUsers(userList);
+      } catch (err) {
+        console.error('🔥 Firestore fetch error:', err);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
+
     fetchUsers();
   }, []);
 
-  // Filter search
+  // 🔍 Filter search
   useEffect(() => {
     if (search.trim() === '') {
       setFilteredUsers(users);
@@ -67,6 +71,7 @@ const HomeScreen = () => {
     }
   }, [search, users]);
 
+  // 🧱 Render user row
   const renderItem = ({ item }) => (
     <TouchableOpacity
       className="flex-row py-3 border-b border-gray-200 items-center"
@@ -112,7 +117,7 @@ const HomeScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* ✅ Custom Search Bar */}
+      {/* 🔎 Search Bar */}
       <View className="px-4 pt-4 pb-2">
         <TextInput
           value={search}
