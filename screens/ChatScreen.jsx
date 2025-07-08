@@ -48,17 +48,40 @@ const ChatScreen = ({ route, navigation }) => {
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
-    await db.collection('chats').doc(chatId).collection('messages').add({
-      text: newMessage.trim(),
-      senderId: currentUser.uid,
-      receiverId: userId,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-    });
+    const trimmedMessage = newMessage.trim();
+    const timestamp = firestore.FieldValue.serverTimestamp();
 
-    setNewMessage('');
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    try {
+      const messageRef = db
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages');
+
+      await messageRef.add({
+        text: trimmedMessage,
+        senderId: currentUser.uid,
+        receiverId: userId,
+        createdAt: timestamp,
+      });
+
+      // 🔄 Update lastMessage for both users
+      const userRef1 = db.collection('users').doc(currentUser.uid);
+      const userRef2 = db.collection('users').doc(userId);
+
+      const updates = {
+        lastMessage: trimmedMessage,
+        lastSeen: timestamp, // optionally update lastSeen too
+      };
+
+      await Promise.all([userRef1.update(updates), userRef2.update(updates)]);
+
+      setNewMessage('');
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (err) {
+      console.error('❌ Error sending message:', err);
+    }
   };
 
   useEffect(() => {

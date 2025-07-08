@@ -9,14 +9,8 @@ import {
   TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  orderBy,
-} from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -25,41 +19,109 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // 🔥 Fetch users from Firestore
   useEffect(() => {
-    const fetchUsers = async () => {
+    let unsubscribers = [];
+
+    const fetchFriendsAndListen = async () => {
       try {
-        const firestore = getFirestore();
-        const usersCollection = collection(firestore, 'users');
-        const usersSnapshot = await getDocs(
-          query(usersCollection, orderBy('name')),
+        const currentUser = auth().currentUser;
+        if (!currentUser) return;
+
+        const currentUserRef = firestore()
+          .collection('users')
+          .doc(currentUser.uid);
+        const currentUserDoc = await currentUserRef.get();
+        const currentUserData = currentUserDoc.data();
+
+        const friendUIDs = currentUserData?.friend || [];
+        if (friendUIDs.length === 0) {
+          setUsers([]);
+          setFilteredUsers([]);
+          return;
+        }
+
+        const friendsData = await Promise.all(
+          friendUIDs.map(uid => firestore().collection('users').doc(uid).get()),
         );
 
-        const userList = usersSnapshot.docs.map(doc => {
+        const initialList = friendsData.map(doc => {
           const data = doc.data();
           return {
             id: doc.id,
             name: data.name || '',
             avatar: data.avatar || 'https://i.pravatar.cc/150?img=1',
-            lastMessage: data.lastMessage || 'Say hello!',
-            time: data.lastSeen?.toDate().toLocaleTimeString() || 'Now',
-            unread: data.unread || 0,
+            lastMessage: 'Say hello!',
+            time: '',
+            unread: 0,
           };
         });
 
-        setUsers(userList);
-        setFilteredUsers(userList);
+        setUsers(initialList);
+        setFilteredUsers(initialList);
+
+        // Start real-time listeners for each chat
+        initialList.forEach(friend => {
+          const friendId = friend.id;
+          const chatId =
+            currentUser.uid < friendId
+              ? `${currentUser.uid}_${friendId}`
+              : `${friendId}_${currentUser.uid}`;
+
+          const unsubscribe = firestore()
+            .collection('chats')
+            .doc(chatId)
+            .collection('messages')
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .onSnapshot(snapshot => {
+              const lastMsg = snapshot.docs[0]?.data();
+              if (lastMsg) {
+                setUsers(prevUsers =>
+                  prevUsers.map(u =>
+                    u.id === friendId
+                      ? {
+                          ...u,
+                          lastMessage: lastMsg.text || 'Say hello!',
+                          time:
+                            lastMsg.createdAt?.toDate().toLocaleTimeString() ||
+                            '',
+                        }
+                      : u,
+                  ),
+                );
+                setFilteredUsers(prevUsers =>
+                  prevUsers.map(u =>
+                    u.id === friendId
+                      ? {
+                          ...u,
+                          lastMessage: lastMsg.text || 'Say hello!',
+                          time:
+                            lastMsg.createdAt?.toDate().toLocaleTimeString() ||
+                            '',
+                        }
+                      : u,
+                  ),
+                );
+              }
+            });
+
+          unsubscribers.push(unsubscribe);
+        });
       } catch (err) {
-        console.error('🔥 Firestore fetch error:', err);
+        console.error('🔥 Error fetching friends:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchFriendsAndListen();
+
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
   }, []);
 
-  // 🔍 Filter search
+  // 🔍 Search Filter
   useEffect(() => {
     if (search.trim() === '') {
       setFilteredUsers(users);
@@ -71,7 +133,6 @@ const HomeScreen = () => {
     }
   }, [search, users]);
 
-  // 🧱 Render user row
   const renderItem = ({ item }) => (
     <TouchableOpacity
       className="flex-row py-3 border-b border-gray-200 items-center"
@@ -117,7 +178,6 @@ const HomeScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* 🔎 Search Bar */}
       <View className="px-4 pt-4 pb-2">
         <TextInput
           value={search}
@@ -135,7 +195,7 @@ const HomeScreen = () => {
         contentContainerStyle={{ paddingHorizontal: 10 }}
         ListEmptyComponent={
           <View className="flex-1 justify-center items-center mt-12">
-            <Text className="text-base text-gray-500">No users found</Text>
+            <Text className="text-base text-gray-500">No friends found</Text>
           </View>
         }
       />

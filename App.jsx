@@ -3,13 +3,15 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from 'react-native';
-import { Home, MessageCircle, User, Settings } from 'lucide-react-native';
+import { Home, User, Settings, MessageSquare } from 'lucide-react-native';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 
 // Screens
 import HomeScreen from './screens/HomeScreen';
 import ChatScreen from './screens/ChatScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import RequestsScreen from './screens/FriendScreen/index';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/AuthScreen/Login';
 import SignupScreen from './screens/AuthScreen/Signup';
@@ -18,23 +20,23 @@ import VerifyEmailScreen from './screens/AuthScreen/VerifyEmail';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Icon component for tabs
+// Tab icons
 const TabIcon = ({ route, color, size }) => {
   switch (route) {
     case 'Home':
       return <Home color={color} size={size} />;
-    case 'Chat':
-      return <MessageCircle color={color} size={size} />;
     case 'Profile':
       return <User color={color} size={size} />;
     case 'Settings':
       return <Settings color={color} size={size} />;
+    case 'Requests':
+      return <MessageSquare color={color} size={size} />;
     default:
       return null;
   }
 };
 
-// Bottom tabs
+// Tabs only (excluding Chat)
 const MainTabs = React.memo(() => {
   const isDarkMode = useColorScheme() === 'dark';
 
@@ -66,15 +68,15 @@ const MainTabs = React.memo(() => {
         ),
       })}
     >
+      <Tab.Screen name="Requests" component={RequestsScreen} />
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 });
 
-// Auth stack
+// Auth screens
 const AuthStack = React.memo(() => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Login" component={LoginScreen} />
@@ -83,18 +85,26 @@ const AuthStack = React.memo(() => (
   </Stack.Navigator>
 ));
 
-// App Navigator
+// App logic
 const AppNavigator = () => {
   const { user } = useContext(AuthContext);
 
   return (
     <NavigationContainer>
-      {user ? <MainTabs /> : <AuthStack />}
+      {user ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        </Stack.Navigator>
+      ) : (
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 };
 
-// Final App export wrapped with AuthProvider
+// Final export
 export default function App() {
   return (
     <AuthProvider>

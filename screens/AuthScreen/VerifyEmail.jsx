@@ -87,6 +87,8 @@ const VerifyEmailScreen = ({ navigation }) => {
             birthDate: '',
             website: '',
             profession: '',
+            inviteRequest: [],
+            friend: [],
             totalContacts: 0,
             status: 'online',
             lastSeen: new Date(),
