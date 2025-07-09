@@ -8,9 +8,18 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-
 import auth from '@react-native-firebase/auth';
+import {
+  Mail,
+  Lock,
+  User,
+  ChevronRight,
+  Eye,
+  EyeOff,
+} from 'lucide-react-native';
 
 const SignupScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -20,12 +29,12 @@ const SignupScreen = ({ navigation }) => {
     confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (name, value) => {
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSignup = async () => {
@@ -50,13 +59,10 @@ const SignupScreen = ({ navigation }) => {
 
       await userCredential.user.sendEmailVerification();
 
-      // Update display name (optional)
-      await userCredential.user.updateProfile({
-        displayName: name,
-      });
+      await userCredential.user.updateProfile({ displayName: name });
 
       Alert.alert('Success', 'Account created successfully');
-      navigation.navigate('VerifyEmail'); // or wherever you want to go
+      navigation.navigate('VerifyEmail');
     } catch (error) {
       console.log(error);
       Alert.alert('Signup Failed', error.message);
@@ -70,94 +76,214 @@ const SignupScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-100">
-      <View className="flex-1 items-center justify-center p-4">
-        <Image
-          source={require('../../assets/logo.png')}
-          className="w-32 h-32 mb-8"
-        />
-
-        <Text className="text-2xl font-bold mb-6 text-gray-800">
-          Create Account
-        </Text>
-
-        <View className="w-full mb-4">
-          <Text className="text-gray-700 mb-1">Full Name</Text>
-          <TextInput
-            className="bg-white p-3 rounded-lg border border-gray-300"
-            placeholder="John Doe"
-            value={formData.name}
-            onChangeText={text => handleChange('name', text)}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      className="flex-1 bg-slate-50"
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="flex-1 items-center justify-center px-6 py-12">
+          {/* Logo */}
+          <Image
+            source={require('../../assets/logo.png')}
+            style={{ width: 66, height: 66 }}
+            className="mb-4"
           />
-        </View>
 
-        <View className="w-full mb-4">
-          <Text className="text-gray-700 mb-1">Email</Text>
-          <TextInput
-            className="bg-white p-3 rounded-lg border border-gray-300"
-            placeholder="example@email.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={formData.email}
-            onChangeText={text => handleChange('email', text)}
-          />
-        </View>
+          {/* Title */}
+          <Text className="text-2xl font-bold text-slate-800 mb-2">
+            Create Account
+          </Text>
+          <Text className="text-base text-slate-500 mb-4">
+            Sign up to get started
+          </Text>
 
-        <View className="w-full mb-4">
-          <Text className="text-gray-700 mb-1">Password</Text>
-          <TextInput
-            className="bg-white p-3 rounded-lg border border-gray-300"
-            placeholder="••••••••"
-            secureTextEntry
-            value={formData.password}
-            onChangeText={text => handleChange('password', text)}
-          />
-        </View>
-
-        <View className="w-full mb-6">
-          <Text className="text-gray-700 mb-1">Confirm Password</Text>
-          <TextInput
-            className="bg-white p-3 rounded-lg border border-gray-300"
-            placeholder="••••••••"
-            secureTextEntry
-            value={formData.confirmPassword}
-            onChangeText={text => handleChange('confirmPassword', text)}
-          />
-        </View>
-
-        <TouchableOpacity
-          className="w-full bg-blue-500 p-3 rounded-lg mb-4"
-          onPress={handleSignup}
-        >
-          <Text className="text-white text-center font-bold">Sign Up</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="w-full flex-row items-center justify-center bg-white p-3 rounded-lg border border-gray-300 mb-4"
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#DB4437" />
-          ) : (
-            <>
-              <Image
-                source={require('../../assets/google.png')} // Make sure you have this image in your assets
-                style={{ width: 20, height: 20, marginRight: 8 }}
-                resizeMode="contain"
+          {/* Name Field */}
+          <View className="w-full mb-4">
+            <Text className="text-sm font-medium text-slate-700 mb-2">
+              Full Name
+            </Text>
+            <View
+              className={`flex-row items-center bg-white border rounded-md px-4 py-1 ${
+                focusedField === 'name'
+                  ? 'border-blue-500 shadow-sm shadow-blue-200'
+                  : 'border-slate-200'
+              }`}
+            >
+              <User size={20} color="#9ca3af" style={{ marginRight: 12 }} />
+              <TextInput
+                className="flex-1 text-slate-800 text-base"
+                placeholder="Enter your name"
+                placeholderTextColor="#9ca3af"
+                value={formData.name}
+                onChangeText={text => handleChange('name', text)}
+                onFocus={() => setFocusedField('name')}
+                onBlur={() => setFocusedField(null)}
               />
-              <Text className="text-gray-700 font-medium">
-                Continue with Google
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+            </View>
+          </View>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text className="text-blue-500">Already have an account? Login</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          {/* Email Field */}
+          <View className="w-full mb-4">
+            <Text className="text-sm font-medium text-slate-700 mb-2">
+              Email Address
+            </Text>
+            <View
+              className={`flex-row items-center bg-white border rounded-md px-4 py-1 ${
+                focusedField === 'email'
+                  ? 'border-blue-500 shadow-sm shadow-blue-200'
+                  : 'border-slate-200'
+              }`}
+            >
+              <Mail size={20} color="#9ca3af" style={{ marginRight: 12 }} />
+              <TextInput
+                className="flex-1 text-slate-800 text-base"
+                placeholder="Enter your email"
+                placeholderTextColor="#9ca3af"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={formData.email}
+                onChangeText={text => handleChange('email', text)}
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </View>
+          </View>
+
+          {/* Password Field */}
+          <View className="w-full mb-4">
+            <Text className="text-sm font-medium text-slate-700 mb-2">
+              Password
+            </Text>
+            <View
+              className={`flex-row items-center bg-white border rounded-md px-4 py-1 ${
+                focusedField === 'password'
+                  ? 'border-blue-500 shadow-sm shadow-blue-200'
+                  : 'border-slate-200'
+              }`}
+            >
+              <Lock size={20} color="#9ca3af" style={{ marginRight: 12 }} />
+              <TextInput
+                className="flex-1 text-slate-800 text-base"
+                placeholder="Enter your password"
+                placeholderTextColor="#9ca3af"
+                secureTextEntry={!showPassword}
+                value={formData.password}
+                onChangeText={text => handleChange('password', text)}
+                // onFocus={() => setFocusedField('password')}
+                // onBlur={() => setFocusedField(null)}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                className="p-2"
+              >
+                {showPassword ? (
+                  <EyeOff size={20} color="#9ca3af" />
+                ) : (
+                  <Eye size={20} color="#9ca3af" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Confirm Password Field */}
+          <View className="w-full mb-6">
+            <Text className="text-sm font-medium text-slate-700 mb-2">
+              Confirm Password
+            </Text>
+            <View
+              className={`flex-row items-center bg-white border rounded-md px-4 py-1 ${
+                focusedField === 'confirmPassword'
+                  ? 'border-blue-500 shadow-sm shadow-blue-200'
+                  : 'border-slate-200'
+              }`}
+            >
+              <Lock size={20} color="#9ca3af" style={{ marginRight: 12 }} />
+              <TextInput
+                className="flex-1 text-slate-800 text-base"
+                placeholder="Confirm your password"
+                placeholderTextColor="#9ca3af"
+                secureTextEntry={!showConfirmPassword}
+                value={formData.confirmPassword}
+                onChangeText={text => handleChange('confirmPassword', text)}
+                // onFocus={() => setFocusedField('confirmPassword')}
+                // onBlur={() => setFocusedField(null)}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="p-2"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff size={20} color="#9ca3af" />
+                ) : (
+                  <Eye size={20} color="#9ca3af" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Signup Button */}
+          <TouchableOpacity
+            className={`w-full bg-gray-800 rounded-md px-2 py-4 flex-row justify-center items-center ${
+              loading ? 'opacity-80' : ''
+            }`}
+            onPress={handleSignup}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <>
+                <Text className="text-white text-base font-semibold mr-2">
+                  Sign Up
+                </Text>
+                <ChevronRight size={20} color="#ffffff" />
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View className="flex-row items-center w-full my-6">
+            <View className="flex-1 h-px bg-slate-200" />
+            <Text className="px-3 text-slate-500 text-sm">
+              or continue with
+            </Text>
+            <View className="flex-1 h-px bg-slate-200" />
+          </View>
+
+          {/* Google Sign In */}
+          <TouchableOpacity
+            className={`w-full bg-white border border-slate-200 rounded-md px-6 py-3 flex-row justify-center items-center mb-6 ${
+              loading ? 'opacity-70' : ''
+            }`}
+            onPress={handleGoogleSignIn}
+            disabled={loading}
+          >
+            <Image
+              source={require('../../assets/google.png')}
+              style={{ width: 20, height: 20, marginRight: 12 }}
+            />
+            <Text className="text-slate-700 text-base font-medium">
+              Sign up with Google
+            </Text>
+          </TouchableOpacity>
+
+          {/* Already have an account */}
+          <View className="flex-row">
+            <Text className="text-slate-500 text-sm">
+              Already have an account?
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text className="text-gray-900 text-sm font-semibold ml-1">
+                Login
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
