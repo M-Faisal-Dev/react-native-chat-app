@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from 'react-native';
-import { Home, User, Settings, MessageSquare } from 'lucide-react-native';
+import { Home, User, Settings, Network } from 'lucide-react-native';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 
 // Screens
@@ -29,8 +29,8 @@ const TabIcon = ({ route, color, size }) => {
       return <User color={color} size={size} />;
     case 'Settings':
       return <Settings color={color} size={size} />;
-    case 'Requests':
-      return <MessageSquare color={color} size={size} />;
+    case 'Network':
+      return <Network color={color} size={size} />;
     default:
       return null;
   }
@@ -42,16 +42,17 @@ const MainTabs = React.memo(() => {
 
   const tabBarOptions = useCallback(
     () => ({
-      tabBarActiveTintColor: isDarkMode ? '#f43f5e' : '#e11d48',
-      tabBarInactiveTintColor: isDarkMode ? '#9ca3af' : '#6b7280',
+      tabBarActiveTintColor: isDarkMode ? '#f43f5e' : '#e11d48', // rose-500 / rose-600
+      tabBarInactiveTintColor: isDarkMode ? '#9ca3af' : '#6b7280', // gray-400 / gray-500
       tabBarStyle: {
-        backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb',
+        backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb', // gray-800 / gray-50
         borderTopWidth: 0,
         paddingBottom: 4,
         height: 60,
       },
       tabBarLabelStyle: {
         fontSize: 12,
+        fontWeight: '300', // ↓ lighter than default
         marginBottom: 4,
       },
       headerShown: false,
@@ -68,8 +69,8 @@ const MainTabs = React.memo(() => {
         ),
       })}
     >
-      <Tab.Screen name="Requests" component={RequestsScreen} />
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Network" component={RequestsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>

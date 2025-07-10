@@ -51,6 +51,7 @@ const HomeScreen = () => {
             name: data.name || '',
             avatar: data.avatar || 'https://i.pravatar.cc/150?img=1',
             lastMessage: 'Say hello!',
+            email: data.email,
             time: '',
             unread: 0,
           };
@@ -135,7 +136,7 @@ const HomeScreen = () => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      className="flex-row py-3 border-b border-gray-200 items-center"
+      className="flex-row py-3 px-2 border-b border-gray-200 items-center"
       onPress={() =>
         navigation.navigate('Chat', {
           userId: item.id,
@@ -145,12 +146,16 @@ const HomeScreen = () => {
     >
       <Image
         source={{ uri: item.avatar }}
-        className="w-12 h-12 rounded-full mr-3"
+        className="w-14 h-14 rounded-full mr-3"
       />
       <View className="flex-1">
-        <View className="flex-row justify-between mb-1">
+        <View className="flex-row justify-between">
           <Text className="text-base font-semibold">{item.name}</Text>
           <Text className="text-xs text-gray-500">{item.time}</Text>
+        </View>
+
+        <View className="mb-1">
+          <Text className="text-sm text-gray-600">{item.email}</Text>
         </View>
         <View className="flex-row justify-between items-center">
           <Text className="text-sm text-gray-600 flex-1 mr-2" numberOfLines={1}>
@@ -178,13 +183,13 @@ const HomeScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      <View className="px-4 pt-4 pb-2">
+      <View className="px-4 pt-5 pb-2">
         <TextInput
           value={search}
           onChangeText={setSearch}
           placeholder="Search users..."
           placeholderTextColor="#9ca3af"
-          className="bg-gray-100 px-4 py-2 rounded-full text-base text-black"
+          className="bg-gray-100 px-4 py-3 rounded-full text-base text-black"
         />
       </View>
 

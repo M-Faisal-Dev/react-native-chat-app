@@ -13,22 +13,21 @@ const UserCard = ({
   console.log(item, 'this is item id');
 
   return (
-    <View className="bg-blue-100 flex-row items-center p-4 rounded-xl mb-3">
+    <View className="bg-gray-200 flex-row items-center p-4 rounded-xl mb-3">
       <Image
         source={{ uri: item.avatar }}
-        className="w-14 h-14 rounded-full mr-4 border-2 border-green-500"
+        className="w-14 h-14 rounded-full mr-4 border border-gray-300"
       />
       <View className="flex-1">
         <Text className="text-base font-semibold text-gray-900">
           {item.name}
         </Text>
         <Text className="text-gray-700 text-sm" numberOfLines={1}>
-          {item.title}
+          {item.email}
         </Text>
         <Text className="text-gray-500 text-xs mt-1">
           {item.mutualConnections} mutual connections
         </Text>
-        <Text className="text-gray-400 text-xs">{item.date}</Text>
       </View>
 
       {activeTab === 'requests' && (

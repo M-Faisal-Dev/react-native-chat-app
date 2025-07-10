@@ -13,7 +13,7 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
           <Text
             className={`text-sm font-semibold capitalize ${
               activeTab === tab
-                ? 'text-green-600 border-b-2 border-green-600'
+                ? 'text-gray-600 border-b-2 border-gray-600'
                 : 'text-gray-500'
             }`}
           >
